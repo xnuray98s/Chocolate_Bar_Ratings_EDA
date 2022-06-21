@@ -19,7 +19,6 @@ get_dupes(chocolate)# No duplicates
 
 # Rename Nulls
 lapply(chocolate,function(x) { length(which(is.na(x)))}) 
-chocolate$ingredients <- replace_na(chocolate$ingredients, "Unknown")
 
 chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent)))/100 # Percentage chr > dbl
 
@@ -37,48 +36,77 @@ chocolate %>%
 chocolate %>% 
   select(-B, -S, -`S*`, -C, -V, -L, -Sa) -> chocolate
 
-## Descriptive Stats
-# Bar chart chocolate origin frequency (top 3-5) (country (3-5), count(bean_origin))
+## EDA
 
+# Explain what blend is
 chocolate %>% 
-  group_by(country_of_bean_origin) %>% 
-  summarize(n = n(), avg_rating = mean(rating)) %>%
-  mutate(freq = n/sum(n)) -> bean_origin
+  filter(country_of_bean_origin == "Blend") -> Blend
 
-arrange(bean_origin, desc(n))
 
+# correlation matrix
+chocolate %>% 
+  select(rating, cocoa_percent, beans, sugar, 
+         sweetener, cocoa_butter, vanilla, lecithin, salt) -> num_chocolate
+
+corrplot(cor(num_chocolate), method = "color", type = "lower", is.corr = TRUE, mar=c(0,0,1,0),
+         title = 'Correlation Map for Dataset Variables',addCoef.col = TRUE,
+         tl.cex = 0.6, tl.col = 'black', number.cex=0.5)
+
+# Bar chart chocolate origin frequency (top 3-5) (country (3-5), count(bean_origin))
+# Sara
 ggplot(chocolate, aes(x = country_of_bean_origin)) + 
   geom_histogram(stat = "count") + 
   coord_flip() 
 
-ggplot(bean_origin[1:5,], aes(x = country_of_bean_origin, y = freq)) + 
-  geom_histogram(stat="identity") 
+# Nourah
+chocolate %>% 
+  group_by(country_of_bean_origin) %>% # Group by origin
+  filter(n() > 50) %>% # Limit to those with at least 50 observations
+  mutate(count = n()) %>% # Add the count column
+  ggplot(aes(x = reorder(country_of_bean_origin, count))) + 
+  geom_bar() + 
+  coord_flip() + 
+  theme_minimal() + 
+  labs(x = 'Bean origin', y = 'Count', title = 'Most frequently used broad bean origins', caption = "only countires with more than 50 observations")
+  
 
-# hist(chocolate$country_of_bean_origin)
+# Pie chart
 
-# Distribution of ratings (Pie chart showing ratings + percentages)
+# chocolate %>% 
+#   group_by(country_of_bean_origin) %>% # Group by origin
+#   filter(n() > 50) %>% # Limit to those with at least 50 observations
+#   mutate(count = n()) %>% # Add the count column
+#   ggplot(aes(x = reorder(country_of_bean_origin, count))) + 
+#   geom_bar() + 
 
-# Highest production (company locations) of high quality chocolate (bar chart x = countries, y = rating count)
+
+# Frequency of company location's Hanadi
 
 
+# Average of ratings per years Hanadi
+
+
+# Company locations per high quality chocolate (bar chart x = countries, y = mean(rating)) Sara
+
+# Company location vs cocoa percent Refal
 
 ## Research Questions
+# -----------------------
 # What contributes to a high rating? 
-      # Country of origin 
-      # Cocoa Percent
+      # Country of origin Sara
+      # Cocoa Percent Nourah
+      # Ingredients Nourah
       
-# Chocolate characteristics and what contributes to each characteristic? 
+# How did the taste of customers change overtime? (ingredients per years) Refal
 
-# How did the taste of customers change overtime? (people used to like nuts now they like caramel)
+# How did the cocoa persent change overtime? Hanadi
 
-#     __________________
+# Check for outliers... Refal
 
- 
+# ------------------------
 
-
-
-
-
-
-# sum(is.na(chocolate$ingredients))
-unique(chocolate$company_location)
+# Hypothesis testing:
+# H0 => rating has no relation with cocoa percent
+# H0 => rating has no relation with ingredients
+# H0 => rating has no relation with cocoa origin
+# H0 => rating doesn't change overtime
