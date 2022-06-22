@@ -20,11 +20,7 @@ get_dupes(chocolate)# No duplicates
 # Check for nulls
 lapply(chocolate,function(x) { length(which(is.na(x)))}) 
 
-<<<<<<< HEAD
-chocolate$cocoa_percent <- as.double(sub("%", "", chocolate$cocoa_percent))# Percentage chr > dbl
-=======
 chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent))) # Percentage chr > dbl
->>>>>>> 12ca24dca04d5859896780fd25ac7d45c0b2cd75
 
 chocolate$ingredients = substr(chocolate$ingredients, 3, nchar(chocolate$ingredients))
 chocolate$ingredients = trimws(chocolate$ingredients, which = "both")
