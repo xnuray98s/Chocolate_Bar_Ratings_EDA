@@ -20,7 +20,7 @@ get_dupes(chocolate)# No duplicates
 # Rename Nulls
 lapply(chocolate,function(x) { length(which(is.na(x)))}) 
 
-chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent)))/100 # Percentage chr > dbl
+chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent))) # Percentage chr > dbl
 
 chocolate$ingredients = substr(chocolate$ingredients, 4, nchar(chocolate$ingredients))
 chocolate$ingredients
@@ -104,7 +104,15 @@ chocolate %>%
 
 # Company locations per high quality chocolate (bar chart x = countries, y = mean(rating)) Sara
 
-# Company location vs cocoa percent Refal
+# Company location vs cocoa percent Hanadi
+  chocolate %>% 
+    group_by(company_location) %>%
+    filter(n() > 50) %>% 
+  ggplot(aes(company_location, cocoa_percent)) +
+    geom_jitter(width = 0.15, shape = 16, alpha = 0.25) +
+    stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "blue") +
+    labs(x = 'Company location', y = 'Cocoa%', title = 'Average cocoa% in company location')
+  
 
 ## Research Questions
 # -----------------------
