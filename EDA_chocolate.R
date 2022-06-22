@@ -67,9 +67,8 @@ chocolate %>%
   group_by(country_of_bean_origin) %>% # Group by origin
   count(country_of_bean_origin) %>% 
   filter(n > 50) %>% # Limit to those with at least 50 observations
-  mutate(count = n / nrow(chocolate)) %>% # Add the count column
-  ggplot(aes(x = reorder(country_of_bean_origin, count))) + 
-  geom_bar() + 
+  ggplot(aes(x = country_of_bean_origin, y = n, fill = country_of_bean_origin)) + 
+  geom_bar(stat = "identity") + 
   coord_flip() + 
   theme_minimal() + 
   labs(x = 'Bean origin', y = 'Count', title = 'Most frequently used broad bean origins', caption = "only countires with more than 500 observations")
@@ -78,7 +77,7 @@ chocolate %>%
 
 chocolate %>%
   group_by(country_of_bean_origin) %>% # Group by origin
-  filter(n() > 50) %>% # Limit to those with at least 50 observations
+  filter(n() > 100) %>% # Limit to those with at least 100 observations
   mutate(count = n()) %>% 
   ggplot(aes(x = "", y = count, fill = country_of_bean_origin)) +
   geom_bar(stat = "identity", width = 1) +
@@ -95,7 +94,7 @@ chocolate %>%
   group_by(company_location) %>%
   filter(n() > 50) %>% 
   mutate(count = n()) %>%
-  ggplot(aes(x = reorder(company_location, count))) + 
+  ggplot(aes(x = reorder(company_location, count), fill = company_location)) + 
   geom_bar() + 
   coord_flip() + 
   theme_minimal() +
@@ -104,8 +103,8 @@ chocolate %>%
 
 # Average of ratings per years Hanadi
 ggplot(chocolate, aes(review_date, rating)) +
-  geom_jitter(width = 0.15, shape = 16, alpha = 0.25) +
-  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "blue") +
+  geom_jitter(width = 0.15, shape = 16, alpha = 0.25, color = "#E65B35") +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "#00A087") +
   labs(x = 'Year', y = 'Rating', title = 'Average rating over the years')
 
 
@@ -116,7 +115,7 @@ chocolate %>%
   summarize(avg_rating = mean(rating)) -> company_loc # Calculating average rating for each company_location
                                                       # Assigning the value to a variable 'company_loc' for further handling
 company_loc <- arrange(company_loc, desc(avg_rating)) # Arranging values in a descending order by the average rating
-ggplot(company_loc[1:10,], aes(x = reorder(company_location, avg_rating, decreasing = TRUE), y = avg_rating)) + 
+ggplot(company_loc[1:10,], aes(x = reorder(company_location, avg_rating, decreasing = TRUE), y = avg_rating, fill = company_location)) + 
   geom_bar(stat="identity", width = 0.8, position = position_dodge(width=5)) 
 
 # Bottom Five
@@ -125,7 +124,7 @@ chocolate %>%
   summarize(avg_rating = mean(rating)) -> company_loc # Calculating average rating for each company_location
 # Assigning the value to a variable 'company_loc' for further handling
 company_loc <- arrange(company_loc, avg_rating) # Arranging values in a descending order by the average rating
-ggplot(company_loc[1:5,], aes(x = reorder(company_location, avg_rating, decreasing = FALSE), y = avg_rating)) + 
+ggplot(company_loc[1:5,], aes(x = reorder(company_location, avg_rating, decreasing = FALSE), y = avg_rating, fill = company_location)) + 
   geom_bar(stat="identity", width = 0.8, position = position_dodge(width=5)) 
 
 # Here, using max rating which is not more informative than avg 
@@ -147,8 +146,8 @@ chocolate %>%
   group_by(company_location) %>%
   filter(n() > 50) %>% 
   ggplot(aes(company_location, cocoa_percent)) +
-  geom_jitter(width = 0.15, shape = 16, alpha = 0.25) +
-  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "blue") +
+  geom_jitter(width = 0.15, shape = 16, alpha = 0.25, color = "#E65B35") +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "#00A087") +
   labs(x = 'Company location', y = 'Cocoa%', title = 'Average cocoa% in company location')
 
 ## Research Questions
@@ -163,20 +162,20 @@ chocolate %>%
 
 origin_rating <- arrange(country_of_bean_origin, avg_rating) # Arranging values in a descending order by the average rating
 
-ggplot(origin_rating[1:5,], aes(x = reorder(country_of_bean_origin, avg_rating, decreasing = TRUE), y = avg_rating)) + 
+ggplot(origin_rating[1:5,], aes(x = reorder(country_of_bean_origin, avg_rating, decreasing = TRUE), y = avg_rating, fill = country_of_bean_origin)) + 
   geom_bar(stat="identity", width = 0.8, position = position_dodge(width=5)) 
 
 # Boxplot (not likely to use)
 chocolate %>% 
   group_by(country_of_bean_origin) %>%
-  ggplot(aes(factor(country_of_bean_origin), `rating`)) +
+  ggplot(aes(factor(country_of_bean_origin), `rating`, fill = country_of_bean_origin)) +
   geom_boxplot()
   
 
 # Cocoa Percent vs Rating Nourah
 ggplot(chocolate, aes(rating, cocoa_percent)) +
-  geom_jitter(width = 0.25, alpha = 0.5) +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_jitter(width = 0.25, alpha = 0.5, color = "#E65B35") +
+  geom_smooth(method = "lm", se = FALSE, color = "#00A087")
 
 # Ingredients vs Rating  Nourah
 # this is the distribution but it doesn't say much
@@ -209,13 +208,13 @@ ingredients %>%
 
 # How did the cocoa percent change overtime? Hanadi
 ggplot(chocolate, aes(review_date, cocoa_percent)) +
-  geom_jitter(alpha = 0.3) +
+  geom_jitter(alpha = 0.3, color = "#E65B35") +
   labs(x = 'Year', y = 'Cocoa%', title = 'Amount of cocoa % over the years')
 
 #Average cocoa% over the years?
 ggplot(chocolate, aes(review_date, cocoa_percent)) +
-  geom_jitter(width = 0.2, shape = 1) +
-  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red") +
+  geom_jitter(width = 0.2, shape = 1, color = "#E65B35") +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "#00A087") +
   labs(x = 'Year', y = 'Cocoa%', title = 'Amount of cocoa % over the years') 
 ### Both don't seem very informative, basically not much change over the years.
 
@@ -225,7 +224,86 @@ ggplot(chocolate, aes(review_date, cocoa_percent)) +
 # ------------------------
 
 # Hypothesis testing:
-# H0 => rating has no relation with cocoa percent
-# H0 => rating has no relation with ingredients
+# H0 => rating has no relation with cocoa percent 
+# H0 => rating has no relation with type of sweetener
 # H0 => rating has no relation with cocoa origin
 # H0 => rating doesn't change overtime
+
+
+
+# H0 => rating has no relation with type of sweetener
+# no information
+ggplot(chocolate, aes(x = 1, y = rating)) +
+  geom_jitter(width = 0.2) +
+  labs(title = "No information from X at all")
+
+# all information
+ingredients %>% 
+  filter(ingredient == "sugar" | ingredient == "sweetener") %>% 
+  group_by(ingredient) %>% 
+  filter(is_ingredient == 1) %>% 
+  select(ingredient, cocoa_percent, review_date, rating) -> type_sweetener
+
+type_sweetener %>% 
+  group_by(ingredient) %>% 
+  ggplot(aes(x = ingredient, y = rating)) +
+  geom_jitter(width = 0.2) +
+  coord_cartesian() +
+  labs(title = "ALL information from X that is available")
+
+t.test(rating ~ ingredient, data = type_sweetener)
+# We reject the null hypothesis!
+
+# Linear regression
+## no information 
+Sugar_mean <- mean(type_sweetener$rating[type_sweetener$ingredient == "sugar"])
+Sugar_mean
+
+type_sweetener %>% 
+  filter(ingredient == "sugar") %>% 
+  ggplot(aes(x = 1, y = rating)) +
+  geom_jitter(width = 0.5) +
+  geom_hline(aes(yintercept = Sugar_mean, color = "Null model (y-bar)")) +
+  coord_cartesian(xlim = c(0,2)) +
+  labs(title = "No information from X at all")
+
+## All information
+type_sweetener %>% 
+  filter(ingredient == "sugar") %>% 
+  ggplot(aes(x = cocoa_percent, y = rating)) +
+  geom_jitter(width = 0.5, alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "ALL information from X (cocoa_percent for sugar)")
+
+type_sweetener %>% 
+  filter(ingredient == "sweetener") %>% 
+  ggplot(aes(x = cocoa_percent, y = rating)) +
+  geom_jitter(width = 0.5, alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "ALL information from X (cocoa_percent for sugar)")
+
+
+type_sweetener %>% 
+  filter(ingredient == "sugar") %>% 
+  ggplot(aes(x = review_date, y = rating)) +
+  geom_jitter(width = 0.5) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "ALL information from X (review_date for sugar)")
+
+
+# H0 => rating has no relation with cocoa origin
+chocolate[chocolate$country_of_bean_origin == "Venezuela" | chocolate$country_of_bean_origin == "Blend",] -> bean_origin
+  
+select(bean_origin, country_of_bean_origin, rating) -> bean_origin_two_sample
+
+unique(bean_origin_two_sample$country_of_bean_origin)
+
+t.test(rating ~ country_of_bean_origin, data = bean_origin_two_sample)
+
+model <- lm(rating ~ country_of_bean_origin, data = bean_origin_two_sample)
+coef(model)
+summary(model)
+
+plot()
+abline(model)
+abline(coef = coef(model))
