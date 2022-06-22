@@ -20,7 +20,11 @@ get_dupes(chocolate)# No duplicates
 # Check for nulls
 lapply(chocolate,function(x) { length(which(is.na(x)))}) 
 
+<<<<<<< HEAD
 chocolate$cocoa_percent <- as.double(sub("%", "", chocolate$cocoa_percent))# Percentage chr > dbl
+=======
+chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent))) # Percentage chr > dbl
+>>>>>>> 12ca24dca04d5859896780fd25ac7d45c0b2cd75
 
 chocolate$ingredients = substr(chocolate$ingredients, 3, nchar(chocolate$ingredients))
 chocolate$ingredients = trimws(chocolate$ingredients, which = "both")
@@ -88,13 +92,37 @@ chocolate %>%
 
 # Frequency of company location's Hanadi
 
+chocolate %>% 
+  group_by(company_location) %>%
+  filter(n() > 100) %>% 
+  mutate(count = n()) %>%
+  ggplot(aes(x = reorder(company_location, count))) + 
+  geom_bar() + 
+  coord_flip() + 
+  theme_minimal() +
+  labs(x = 'Company location', y = 'Count', title = 'Top 4 company locations')
+
 
 # Average of ratings per years Hanadi
 
+  ggplot(chocolate, aes(review_date, rating)) +
+  geom_jitter(width = 0.15, shape = 16, alpha = 0.25) +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "blue") +
+  labs(x = 'Year', y = 'Rating', title = 'Average rating over the years')
+  
+  #How can I show all the years at the x axes?
 
 # Company locations per high quality chocolate (bar chart x = countries, y = mean(rating)) Sara
 
-# Company location vs cocoa percent Refal
+# Company location vs cocoa percent Hanadi
+  chocolate %>% 
+    group_by(company_location) %>%
+    filter(n() > 50) %>% 
+  ggplot(aes(company_location, cocoa_percent)) +
+    geom_jitter(width = 0.15, shape = 16, alpha = 0.25) +
+    stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "blue") +
+    labs(x = 'Company location', y = 'Cocoa%', title = 'Average cocoa% in company location')
+  
 
 ## Research Questions
 # -----------------------
@@ -132,8 +160,18 @@ chocolate %>%
 
 # How did the taste of customers change overtime? (ingredients per years) Refal
 
-# How did the cocoa persent change overtime? Hanadi
-
+# How did the cocoa percent change overtime? Hanadi
+  ggplot(chocolate, aes(review_date, cocoa_percent)) +
+    geom_jitter(alpha = 0.3) +
+    labs(x = 'Year', y = 'Cocoa%', title = 'Amount of cocoa % over the years')
+  
+  #Average cocoa% over the years?
+  ggplot(chocolate, aes(review_date, cocoa_percent)) +
+    geom_jitter(width = 0.2, shape = 1) +
+    stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red") +
+    labs(x = 'Year', y = 'Cocoa%', title = 'Amount of cocoa % over the years')
+  ### Both don't seem very informative, basically not much change over the years.
+  
 # Check for outliers... Refal
 
 
