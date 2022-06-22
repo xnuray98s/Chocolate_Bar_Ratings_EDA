@@ -6,6 +6,8 @@ library(corrplot)
 tuesdata <- tidytuesdayR::tt_load('2022-01-18')
 chocolate <- tuesdata$chocolate
 
+
+
 # stats summary
 glimpse(chocolate)
 summary(chocolate)
@@ -307,3 +309,62 @@ summary(model)
 plot()
 abline(model)
 abline(coef = coef(model))
+# H0 => rating has no relation with cocoa percent -- OLS cont ~ cont 
+# H1 => rating has a relation with cocoa percent -- OLS cont ~ cont
+# chocolate %>% 
+#   ggplot(aes(x = cocoa_percent, y = rating)) +
+#   geom_point() +
+#   geom_smooth(method = "lm", color = "red", se = FALSE) +
+#   labs(title = "Cocoa (%) vs. Rating")
+
+# ggplot(chocolate, aes(x = cocoa_percent, y = rating)) +
+#   geom_point() +
+#   geom_smooth(method = "lm", aes(color = "OLS model"), se = FALSE) +
+#   geom_hline(aes(yintercept = mean(chocolate$rating), color = "Null model (y-bar)"), size = 1) +
+#   labs(title = "Null vs. Fitted Model")
+# 
+# lm(rating ~ cocoa_percent, data = chocolate) 
+
+
+
+# H0 => rating doesn't change overtime -- OLS cont ~ cont 
+# H1 => rating changes overtime -- OLS cont ~ cont 
+
+# chocolate %>% 
+#   ggplot(aes(x = review_date, y = rating)) +
+#   geom_point() +
+#   geom_smooth(method = "lm", color = "red", se = FALSE) +
+#   labs(title = "Review date vs. Rating")
+# 
+# lm(rating ~ review_date, data = chocolate) 
+
+## 
+# chocolate$rating_cat <- ifelse(chocolate$rating > 2, "High", "Low")
+# 
+# ggplot(chocolate, aes(x = rating_cat, y = cocoa_percent)) +
+#   geom_jitter(width = 0.2, ) +
+#   stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "blue") +
+#   coord_cartesian() +
+#   labs(title = "ALL information from X that is available")
+# 
+# t.test(rating_cat ~ cocoa_percent, data = chocolate, var.equal = TRUE)
+
+
+# The p-value is 0.001536. What does this tell me?
+#   
+#   We reject the null hypothesis!
+#   There is evidence that the location (site) is related to the height.
+# There is an association between height and site.
+# We can use the location to predict height!
+
+
+nutty <- chocolate[grep("nut", chocolate$most_memorable_characteristics), ]
+nutty$characteristic <- rep("Nutty", times = nrow(nutty))
+
+fruity <- chocolate[grep("frui", chocolate$most_memorable_characteristics), ]
+fruity$characteristic <- rep("Fruity", times = nrow(fruity))
+
+# H0 => rating has no relation with cocoa origin
+flavors <- bind_rows( nutty, fruity) 
+select(flavors, characteristic, rating) -> flavors_two_sample
+t.test(rating ~ characteristic  , data = flavors_two_sample, var.equal = TRUE)
