@@ -18,7 +18,9 @@ summary(chocolate)
 get_dupes(chocolate)# No duplicates
 
 # Check for nulls
-lapply(chocolate,function(x) { length(which(is.na(x)))}) 
+lapply(chocolate,function(x) { length(which(is.na(x)))})
+
+chocolate[is.na(chocolate)] = 0
 
 chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent))) # Percentage chr > dbl
 
@@ -35,10 +37,7 @@ chocolate %>%
 chocolate %>% 
   select(-str1, -str2, -str3, -str4, -str5, -str6) -> chocolate
 
-chocolate %>% 
-  pivot_longer(cols = c(beans, sugar, sweetener, 
-                        cocoa_butter, vanilla, lecithin, salt), 
-               names_to = "ingredient", values_to = "is_ingredient", values_drop_na = TRUE) -> chocolate 
+ 
 
 
 
@@ -67,13 +66,14 @@ ggplot(chocolate, aes(x = country_of_bean_origin)) +
 # Nourah
 chocolate %>% 
   group_by(country_of_bean_origin) %>% # Group by origin
-  filter(n() > 50) %>% # Limit to those with at least 50 observations
-  mutate(count = n()) %>% # Add the count column
+  count(country_of_bean_origin) %>% 
+  filter(n > 50) %>% # Limit to those with at least 50 observations
+  mutate(count = n / nrow(chocolate)) %>% # Add the count column
   ggplot(aes(x = reorder(country_of_bean_origin, count))) + 
   geom_bar() + 
   coord_flip() + 
   theme_minimal() + 
-  labs(x = 'Bean origin', y = 'Count', title = 'Most frequently used broad bean origins', caption = "only countires with more than 50 observations")
+  labs(x = 'Bean origin', y = 'Count', title = 'Most frequently used broad bean origins', caption = "only countires with more than 500 observations")
   
 
 # Pie chart
@@ -81,16 +81,17 @@ chocolate %>%
 chocolate %>%
   group_by(country_of_bean_origin) %>% # Group by origin
   filter(n() > 50) %>% # Limit to those with at least 50 observations
-  mutate(count = n()) %>% # Add the count column
-  ggplot(aes(x = reorder(country_of_bean_origin, count))) +
-  geom_bar() 
-
+  mutate(count = n()) %>% 
+  ggplot(aes(x = "", y = count, fill = country_of_bean_origin)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) +
+  theme_void()
 
 # Frequency of company location's Hanadi
 
 chocolate %>% 
   group_by(company_location) %>%
-  filter(n() > 100) %>% 
+  filter(n() > 50) %>% 
   mutate(count = n()) %>%
   ggplot(aes(x = reorder(company_location, count))) + 
   geom_bar() + 
@@ -134,20 +135,25 @@ ggplot(chocolate, aes(rating, cocoa_percent)) +
 
 # Ingredients vs Rating  Nourah
 # this is the distribution but it doesn't say much
+
 chocolate %>% 
+  select(beans, sugar, sweetener, cocoa_butter, vanilla, lecithin, salt, cocoa_percent, review_date, rating) %>% 
+  pivot_longer(cols = c(-cocoa_percent, -review_date, -rating) ,names_to = "ingredient", values_to = "is_ingredient") -> ingredients
+
+ingredients %>% 
   group_by(ingredient) %>% 
   filter(is_ingredient == 1) %>% 
   ggplot(aes(x = rating, fill = ingredient)) +
   geom_bar()
 
 # Outliers
-chocolate %>% 
+ingredients %>% 
   group_by(ingredient) %>% 
   filter(is_ingredient == 1) %>% 
   ggplot(aes(x = ingredient, y = rating, fill = ingredient)) +
   geom_boxplot()
 
-chocolate %>% 
+ingredients %>% 
   group_by(ingredient) %>% 
   filter(is_ingredient == 1) %>% 
   ggplot(aes(x=rating, group=ingredient, fill=ingredient)) +
@@ -165,7 +171,7 @@ chocolate %>%
   ggplot(chocolate, aes(review_date, cocoa_percent)) +
     geom_jitter(width = 0.2, shape = 1) +
     stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "red") +
-    labs(x = 'Year', y = 'Cocoa%', title = 'Amount of cocoa % over the years')
+    labs(x = 'Year', y = 'Cocoa%', title = 'Amount of cocoa % over the years') 
   ### Both don't seem very informative, basically not much change over the years.
   
 # Check for outliers... Refal
