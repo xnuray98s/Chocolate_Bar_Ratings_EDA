@@ -3,6 +3,10 @@
 
 The data this week comes from [Flavors of Cacao](http://flavorsofcacao.com/chocolate_database.html) by way of [Georgios and Kelsey](https://github.com/rfordatascience/tidytuesday/issues/408).
 
+- [Github Repo](https://github.com/xnuray98s/Chocolate_Bar_Ratings_EDA)
+
+- [Chocolate Bar Ratings Report](./Chocolate_Bar_Ratings.html)
+
 ## Data
 
 |variable                         |class     |description |
