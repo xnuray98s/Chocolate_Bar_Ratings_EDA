@@ -34,10 +34,10 @@ The data this week comes from [Flavors of Cacao](http://flavorsofcacao.com/choco
 ```bash
 ./
 │   README.md
-│   wine_report.html    
+│   Chocolate_Bar_Ratings.html   
 │   Chocolate_Bar_Ratings_EDA.Rproj
 │
 └───src/
-    │   wine_EDA.R
-    │   wine_report.Rmd
+    │   EDA_chocolate.R
+    │   Chocolate_Bar_Ratings.Rmd
 ```
