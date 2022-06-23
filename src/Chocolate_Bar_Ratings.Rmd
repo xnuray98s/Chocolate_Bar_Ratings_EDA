@@ -5,6 +5,12 @@ output:
   tufte::tufte_html: default
 editor_options: 
   chunk_output_type: console
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "../"
+    )
+  })
 ---
 
 # About the dataset
@@ -34,11 +40,10 @@ library(corrplot)
 library(tufte)
 library(reactable)
 library(here)
-# 
-# tuesdata <- tidytuesdayR::tt_load('2022-01-18')
-# chocolate <- tuesdata$chocolate
 
-chocolate <- read_csv(here("chocolate.csv"))
+tuesdata <- tidytuesdayR::tt_load('2022-01-18')
+chocolate <- tuesdata$chocolate
+
 ```
 
 ```{r include=FALSE}

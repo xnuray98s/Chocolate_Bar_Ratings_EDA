@@ -57,7 +57,7 @@ chocolate %>%
          sweetener, cocoa_butter, vanilla, lecithin, salt) -> num_chocolate
 
 corrplot(cor(num_chocolate), method = "color", type = "lower", is.corr = TRUE, mar=c(0,0,1,0),
-         title = 'Correlation Map for Dataset Variables',addCoef.col = TRUE,
+         title = 'Correlation Map for Rating and Other Variables',addCoef.col = TRUE,
          tl.cex = 0.6, tl.col = 'black', number.cex=0.5)
 
 # Bar chart chocolate origin frequency
@@ -77,8 +77,8 @@ chocolate %>%
   coord_flip() + 
   theme_minimal() + 
   theme(legend.position = "None") +
-  labs(x = 'Bean origin', y = 'Count', title = 'Most frequently used broad bean origins', caption = "only countires with more than 50 observations")
-  
+  labs(x = 'Bean Origin', y = 'Count', title = 'Most Frequently Used Broad Bean Origins', 
+       caption = "Only countires with more than 50 observations")
 
 # Pie chart: chocolate origin frequency limited to those with at least 100 observations
 #Nourah
@@ -109,7 +109,7 @@ chocolate %>%
   coord_flip() + 
   theme_minimal() +
   theme(legend.position = "None") +
-  labs(x = 'Company location', y = 'Count', title = 'Top 4 company locations')
+  labs(x = 'Location', y = 'Count', title = 'Top 4 Companies Locations')
 
 
 # Average of ratings per years Hanadi
@@ -117,7 +117,7 @@ ggplot(chocolate, aes(review_date, rating)) +
   geom_jitter(width = 0.15, shape = 16, alpha = 0.25, color = "#DD2A7B") +
   stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "#4073FF") +
   scale_x_continuous(breaks = seq(2006, 2021, 2)) +
-  labs(x = 'Year', y = 'Rating', title = 'Average rating over the years')
+  labs(x = 'Year', y = 'Rating', title = 'Average Rating Over the Years')
 
 
 # Company locations per high quality chocolate (bar chart x = company_location, y = mean(rating)) 
@@ -211,7 +211,7 @@ ingredients %>%
   filter(is_ingredient == 1) %>% 
   ggplot(aes(x = rating, fill = ingredient)) +
   geom_bar() +
-  labs(title = "Ingredient distribution in each rating")
+  labs(title = "Ingredient Distribution in Each Rating", x = "Rating", y = "Count", fill="Ingredients")
 
 # Outliers
 ingredients %>% 
@@ -225,8 +225,9 @@ ingredients %>%
   filter(is_ingredient == 1) %>% 
   ggplot(aes(x=rating, group=ingredient, fill=ingredient)) +
   geom_density() +
-  facet_wrap(~ingredient) 
-
+  facet_wrap(~ingredient) +
+  labs(x = "Rating", y = "Density", fill="Ingredients") +
+  ggtitle("Distribution of Individual Ingredients")
 # How did the taste of customers change overtime? (ingredients per years):
 
 # How did the cocoa percent change overtime? 
@@ -352,7 +353,14 @@ fruity$characteristic <- rep("Fruity", times = nrow(fruity))
 # H0 => rating has no relation with cocoa origin
 flavors <- bind_rows( nutty, fruity) 
 select(flavors, characteristic, rating) -> flavors_two_sample
-t.test(rating ~ characteristic  , data = flavors_two_sample, var.equal = TRUE)
+
+flavors_two_sample %>% 
+  count(characteristic)
+flavors_two_sample %>%
+  group_by(characteristic) %>% 
+  summarise(var(rating))
+
+t.test(rating ~ characteristic  , data = flavors_two_sample)
 
 
 # Linear regression
