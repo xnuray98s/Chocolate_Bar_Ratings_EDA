@@ -1,0 +1,300 @@
+---
+title: "Chocolate Bar Ratings Data Report"
+author: "By: Hanadi Bin Mujalli, Nourah Almutairi, and Sara Al-Qahtani"
+output: 
+  tufte::tufte_html: default
+editor_options: 
+  chunk_output_type: console
+---
+
+# About the dataset
+The Manhattan Chocolate Society’s Brady Brelinski has reviewed over 2,500 chocolate bars since 2006 and compiles his findings into a  table that lists each bar’s manufacturer, bean origin, percent cocoa, ingredients, review notes, and numerical rating. 
+
+| Variable|Description |
+| :------------------- |:-------------------------------- |
+| Ref | Reference ID |
+| Manufacturer | Name of chocolate bar manufacturer|
+| Company location | Country of manufacturing |
+| Review date |  From 2006 to 2021 |
+| Bean origin |  Country of origin |
+| Specific origin or bar name | Extra information about bar's name or bean origin |
+| Cocoa (%) | The percentage of cocoa |
+| Ingredients | Beans, Sugar, Sweetener, Cocoa Butter, Vanilla, Lecithin, Salt |
+| Review notes |  Most memorable characteristics of that bar |
+| Rating | Rating between 1-5 |
+
+
+
+```{r include=FALSE}
+
+# Import data and important libraries
+library(tidyverse)
+library(janitor)
+library(corrplot)
+library(tufte)
+library(reactable)
+library(here)
+# 
+# tuesdata <- tidytuesdayR::tt_load('2022-01-18')
+# chocolate <- tuesdata$chocolate
+
+chocolate <- read_csv(here("chocolate.csv"))
+```
+
+```{r include=FALSE}
+# This chunk is for data cleaning. 
+get_dupes(chocolate)
+
+# Check for nulls
+lapply(chocolate,function(x) { length(which(is.na(x)))})
+
+```
+
+<br>
+
+Let's take a quick look at our raw data
+```{r echo=FALSE}
+reactable(chocolate, resizable = TRUE, filterable = TRUE, highlight = TRUE, outlined = TRUE, striped = TRUE, showSortIcon = TRUE,
+          defaultColDef = colDef(align = "center",
+                                 minWidth = 190,
+                                 headerStyle = list(background = "#806455ff")))
+```
+
+# Data Munging 
+## 1) Checking for duplicates returned nothing, therefore, there are no duplicates.
+## 2) Null values were only in the ingredients column, 87 null rows were replaced by zeros. 
+## 3) Cocoa percentage column contained a '%' symbol and it was ```<chr>``` data type, therefore, the percentage symbol was removed and it was converted to type ```<dbl>```. 
+
+
+```{r include=FALSE}
+chocolate$ingredients[is.na(chocolate$ingredients)] = 0
+chocolate$cocoa_percent <- (as.double(sub("%", "", chocolate$cocoa_percent))) 
+
+chocolate$ingredients = substr(chocolate$ingredients, 3, nchar(chocolate$ingredients))
+chocolate$ingredients = trimws(chocolate$ingredients, which = "both")
+chocolate %>% 
+  separate(ingredients, c("str1", "str2", "str3", "str4", "str5", "str6"), ",") -> chocolate
+
+chocolate %>% 
+  mutate(beans = as.integer(str1 == "B"), sugar = as.integer(str2 == "S"), 
+         sweetener = as.integer(str2 == "S*" | str3 == "S*"), cocoa_butter= as.integer(str2 == "C" | str3 == "C" | str4 == "C"), 
+         vanilla = as.integer(str2 == "V" | str3 == "V" | str4 == "V" | str5 == "V"),  lecithin = as.integer(str2 == "L" | str3 == "L" | str4 == "L" | str5 == "L" | str6 == "L"),  salt = as.integer(str2 == "Sa" | str3 == "Sa" | str4 == "Sa" | str5 == "Sa" | str6 == "Sa")) -> chocolate
+
+chocolate %>% 
+  select(-str1, -str2, -str3, -str4, -str5, -str6) -> chocolate
+
+chocolate[is.na(chocolate)] = 0 
+
+```
+
+## 4) The column 'ingredients' in the raw data was hard to process and visualize, it contained the number of ingredients followed by comma-separated letters indicating ingredients of the chocolate bar. 
+
+## To mitigate that, the column 'ingredients' was replaced by seven binary columns where 0 signifies the absence of that particular ingredient from the bar and vice versa, as shown below. 
+
+<br>
+
+
+```{r echo=FALSE}
+chocolate %>% 
+  select(beans, sugar, sweetener, cocoa_butter, vanilla, lecithin, salt) -> ingr
+reactable(ingr, resizable = TRUE, filterable = TRUE, highlight = TRUE, outlined = TRUE, striped = TRUE, showSortIcon = TRUE,
+          defaultColDef = colDef(align = "center",
+                                 minWidth = 100,
+                                 headerStyle = list(background = "#806455ff")))
+```
+
+
+<br>
+
+
+<br>
+
+# Exploratory Data Analysis
+
+<br>
+
+Let's explore the data further
+
+### Relationship between ingredients and rating
+```{r echo=FALSE}
+# correlation matrix
+chocolate %>% 
+  select(rating, cocoa_percent, beans, sugar, 
+         sweetener, cocoa_butter, vanilla, lecithin, salt) -> num_chocolate
+
+corrplot(cor(num_chocolate), method = "color", type = "lower", is.corr = TRUE, mar=c(0,0,1,0),
+         title = 'Correlation Map for Rating and Other Variables',addCoef.col = TRUE,
+         tl.cex = 0.6, tl.col = 'black', number.cex=0.5)
+```
+According to the correlation map, the ingredients don't show high correlation with the rating, however, it depicts some interesting correlations. Examples include: 
+
+1) Sugar and beans (+ve correlation): this shows that chocolate beans may inherently contain high sugar content.
+2) Sugar and sweetener (-ve correlation): this correlation shows that higher sugar content means less sweetener addition. 
+
+<br>
+
+
+### Most Popular Bean Origins 
+```{r echo=FALSE}
+chocolate %>% 
+  group_by(country_of_bean_origin) %>% 
+  count(country_of_bean_origin) %>% 
+  filter(n > 50) %>%
+  ggplot(aes(x = country_of_bean_origin, y = n, fill = country_of_bean_origin)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + 
+  theme_minimal() + 
+  theme(legend.position = "None") +
+  labs(x = 'Bean Origin', y = 'Count', title = 'Most Frequently Used Broad Bean Origins', caption = "Only countires with more than 50 observations")
+  
+```
+Based on the figure above, we can conclude that the most frequent bean origins in our data are from Venezuela, Peru, Dominican Republic and Ecuador. *We can see also a bean origin called Blend which means that the cocoa beans that were used in the chocolate bar were a blend of beans from multiple origins*.
+
+<br>
+
+### Top Locations of Chocolate Bar Manufacturing Companies
+```{r echo=FALSE}
+chocolate %>% 
+  group_by(company_location) %>%
+  filter(n() > 100) %>% 
+  mutate(count = n()) %>%
+  ggplot(aes(x = reorder(company_location, count), fill = company_location)) + 
+  geom_bar() + 
+  coord_flip() + 
+  theme_minimal() +
+  theme(legend.position = "None") +
+  labs(x = 'Location', y = 'Count', title = 'Top 4 Companies Locations')
+
+```
+This chart shows where most of our chocolate companies are located, the U.S has most of the chocolate companies in our dataset followed by Canada & France.
+
+<br>
+
+## Research Questions: 
+### 1) Does *cocoa percentage* affect the *rating*?
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(chocolate, aes(cocoa_percent, rating)) +
+  geom_jitter(width = 0.25, alpha = 0.5, color = "#DD2A7B") +
+  geom_smooth(method = "lm", se = FALSE, color = "#4073FF") + 
+  labs(title = "Cocoa Percent per Rating", x = "Cocoa percent", y = "Rating")
+```
+We can see that there is a decrease in the rating when there is an increase in cocoa percent, which may reflect that people like bitter chocolate bars less.
+
+<br>
+
+### 2) Does time play a role in changing chocolate bar ratings?
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(chocolate, aes(review_date, rating)) +
+  geom_jitter(width = 0.15, shape = 16, alpha = 0.25, color = "#DD2A7B") +
+  stat_summary(fun.data = mean_sdl, fun.args = list(mult = 1), col = "#4073FF") +
+  scale_x_continuous(breaks = seq(2006, 2021, 2)) +
+  labs(x = 'Year', y = 'Rating', title = 'Average Rating Over the Years')
+```
+The jitter plot shows slight fluctuations in the average rating over the years with an increase in 2021 to over 3.25 compared to 3 in 2006. These fluctuations might be because companies have been listening to customer feedback which helped them produce more high-quality chocolate bars. 
+
+<br>
+
+### 3) How are ingredients distributed in each rating?
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+chocolate %>% 
+  select(beans, sugar, sweetener, cocoa_butter, vanilla, lecithin, salt, cocoa_percent, review_date, rating) %>% 
+  pivot_longer(cols = c(-cocoa_percent, -review_date, -rating) ,names_to = "ingredient", values_to = "is_ingredient") -> ingredients
+
+ingredients %>% 
+  group_by(ingredient) %>% 
+  filter(is_ingredient == 1) %>% 
+  ggplot(aes(x = rating, fill = ingredient)) +
+  geom_bar() +
+  labs(title = "Ingredient Distribution in Each Rating", x = "Rating", y = "Count", fill="Ingredients")
+
+ingredients %>% 
+  group_by(ingredient) %>% 
+  filter(is_ingredient == 1) %>% 
+  ggplot(aes(x=rating, group=ingredient, fill=ingredient)) +
+  geom_density() +
+  facet_wrap(~ingredient) +
+  labs(x = "Rating", y = "Density", fill="Ingredients") +
+  ggtitle("Distribution of Individual Ingredients")
+```
+
+Based on the above figures, we can see that our most frequent rating is 3.5 followed by 3 and 3.25, we can also see that cocoa beans are part of the ingredients for every chocolate bar in our dataset which is expected. Sweetener and salt seem to have the least observations in our dataset. In contrast, sugar, cocoa butter, and beans seem to have the most observations, and they have similar distribution across ratings, which might indicate that they are the basic ingredient of most chocolate bars in the dataset.  
+
+
+<br> 
+
+
+<!-- 1) last two graphs: legend title, labels. + labs(color='NEW LEGEND TITLE') -->
+## Hypothesis Testing
+
+<br>
+
+
+### Hypothesis #1: 
+
+We performed two sample test on the type of sweetener using two levels which are “Sugar” and “Sweetener”.
+
+```{r echo=FALSE}
+ingredients %>% 
+  filter(ingredient == "sugar" | ingredient == "sweetener") %>% 
+  group_by(ingredient) %>% 
+  filter(is_ingredient == 1) %>% 
+  select(ingredient, cocoa_percent, review_date, rating) -> type_sweetener
+
+t.test(rating ~ ingredient, data = type_sweetener)
+```
+
+Our null hypothesis is that rating has no relation with the type of sweetener, 
+$H_0: \mu_{sugar} - \mu_{sweetener} = 0$
+
+We can see that we have t-value that equal 4.4001 and a degree of freedom that equal 79.806 and p-value that equal 0.00003315 and that tell us:
+
+- We reject the null hypothesis
+- We can use the type of sweetener to predict rating
+
+
+<br>
+
+
+### Hypothesis #2: 
+We performed two sample test on the bean origin using two levels which are “Venezuela” the most frequent single origin bean and “Blend” beans with mixed origin.
+
+```{r echo=FALSE}
+chocolate[chocolate$country_of_bean_origin == "Venezuela" | chocolate$country_of_bean_origin == "Blend",] -> bean_origin
+  
+select(bean_origin, country_of_bean_origin, rating) -> bean_origin_two_sample
+
+t.test(rating ~ country_of_bean_origin, data = bean_origin_two_sample)
+```
+
+Our null hypothesis is that rating is not related to the type of bean origin, $H_0: \mu_{venezuela} - \mu_{blend} = 0$ 
+
+We can see that t-value is -3.2768 and degree of freedom is 256.34 and p-value is 0.00119 and that tell us:
+
+- We reject the null hypothesis
+- We have evidence that the type of bean origin is related to the rating
+
+
+<br>
+
+### Hypothesis #3: 
+We performed two sample test on the chocolate bar characteristic using two levels which are “Fruity” and “Nutty”. 
+
+```{r echo=FALSE}
+nutty <- chocolate[grep("nut", chocolate$most_memorable_characteristics), ]
+nutty$characteristic <- rep("Nutty", times = nrow(nutty))
+
+fruity <- chocolate[grep("frui", chocolate$most_memorable_characteristics), ]
+fruity$characteristic <- rep("Fruity", times = nrow(fruity))
+
+flavors <- bind_rows( nutty, fruity) 
+select(flavors, characteristic, rating) -> flavors_two_sample
+
+t.test(rating ~ characteristic  , data = flavors_two_sample)
+```
+
+Our null hypothesis is that rating is not related to the chocolate bar characteristic, $H_0: \mu_{fruity} - \mu_{nutty} = 0$
+
+We can see that t-value is 0.16208 and degree of freedom is 717.52 and p-value is 0.8713 and that tell us:
+
+- We fail to reject the null hypothesis
+- There is no significant association between the chocolate bar characteristic and rating
